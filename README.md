@@ -1,2 +1,2 @@
-# sp-404mk2-screen-customizer
-Create custom startup screens for your SP-404 MK2.
+# SP-404 MKII Screen Customizer
+Create custom startup screens for your Roland SP-404 MKII.
