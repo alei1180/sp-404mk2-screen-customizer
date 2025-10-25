@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="keywords" content="sp-404, sp-404 MKII, sp-404 MK2, screen customizer, custom screen">
+    <meta name="description" content="SP-404 MKII Screen Customizer."/>
+    <meta name="author" content="Alexander Osadchy">
+
+    <title>SP-404 MKII Screen Customizer</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #34495e;
+            --sp-bg: #1a1a1a;
+            --sp-gray: #333;
+            --sp-light: #555;
+            --sp-highlight: #666;
+            --sp-text: #ddd;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #222;
+            color: var(--sp-text);
+            line-height: 1.6;
+            background-image: linear-gradient(to bottom, #111, #333);
+            min-height: 100vh;
+        }
+        
+        header {
+            background-color: var(--sp-bg);
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            border-bottom: 2px solid var(--sp-highlight);
+        }
+        
+        h1 {
+            margin-bottom: 0.5rem;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(52, 152, 219, 0.7);
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .main-content {
+            background-color: var(--sp-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            border: 1px solid var(--sp-highlight);
+        }
+        
+        .upload-area {
+            border: 2px dashed var(--secondary);
+            border-radius: 5px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(52, 152, 219, 0.1);
+        }
+        
+        .upload-area:hover {
+            background-color: rgba(52, 152, 219, 0.2);
+        }
+        
+        .upload-area.dragover {
+            background-color: rgba(52, 152, 219, 0.3);
+            border-color: var(--accent);
+        }
+        
+        .preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            justify-content: center;
+        }
+        
+        .preview-box {
+            border: 1px solid #555;
+            border-radius: 5px;
+            padding: 1rem;
+            text-align: center;
+            width: 150px;
+            background: #333;
+        }
+        
+        .preview-image {
+            width: 128px;
+            height: 64px;
+            border: 1px solid #666;
+            margin-bottom: 0.5rem;
+            background-color: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            color: #777;
+            overflow: hidden;
+        }
+        
+        .preview-image img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        
+        .controls {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background-color: #333;
+            border-radius: 5px;
+        }
+        
+        .control-group {
+            margin-bottom: 1rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+            color: #ddd;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            background: #555;
+            border-radius: 5px;
+        }
+        
+        .btn {
+            background-color: var(--secondary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-accent {
+            background-color: var(--accent);
+        }
+        
+        .btn-accent:hover {
+            background-color: #c0392b;
+        }
+        
+        .info-box {
+            background-color: rgba(52, 152, 219, 0.1);
+            border-left: 4px solid var(--secondary);
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 4px;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            background-color: var(--sp-bg);
+            color: #aaa;
+            border-top: 1px solid #444;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .status {
+            margin-top: 1rem;
+            padding: 0.5rem;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .status.success {
+            background-color: rgba(39, 174, 96, 0.2);
+            color: #2ecc71;
+            border: 1px solid rgba(39, 174, 96, 0.5);
+            display: block;
+        }
+        
+        .status.error {
+            background-color: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+            border: 1px solid rgba(231, 76, 60, 0.5);
+            display: block;
+        }
+        
+        .crop-container {
+            position: relative;
+            margin: 1rem 0;
+            max-width: 100%;
+            overflow: hidden;
+            user-select: none;
+            border: 1px solid #555;
+            border-radius: 5px;
+        }
+        
+        .crop-area {
+            position: absolute;
+            border: 2px dashed var(--accent);
+            background-color: rgba(231, 76, 60, 0.2);
+            cursor: move;
+        }
+        
+        .resize-handle {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background-color: var(--accent);
+            border: 2px solid white;
+            border-radius: 50%;
+        }
+        
+        .resize-nw {
+            top: -6px;
+            left: -6px;
+            cursor: nw-resize;
+        }
+        
+        .resize-ne {
+            top: -6px;
+            right: -6px;
+            cursor: ne-resize;
+        }
+        
+        .resize-sw {
+            bottom: -6px;
+            left: -6px;
+            cursor: sw-resize;
+        }
+        
+        .resize-se {
+            bottom: -6px;
+            right: -6px;
+            cursor: se-resize;
+        }
+        
+        .crop-controls {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .dimension-display {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>SP-404 MKII Screen Customizer</h1>
+        <p>Create custom startup screens for your Roland SP-404 MKII</p>
+    </header>
+    
+    <div class="container">
+        <div class="main-content">
+            <div class="info-box">
+                <h3>About SP-404 MKII Startup Screens</h3>
+                <p>The SP-404 MKII displays three frames during startup. While the first frame always shows "SP-404", you can fully customize the second and third frames with your own images.</p>
+                <p><strong>Technical Requirements:</strong></p>
+                <ul>
+                    <li>Resolution: 128×64 pixels</li>
+                    <li>Format: BMP (monochrome)</li>
+                    <li>Aspect Ratio: 2:1 (width:height)</li>
+                    <li>Color: Black and white only</li>
+                </ul>
+                <p>Upload any image, crop it to the correct 2:1 aspect ratio, adjust the black/white balance, and download the ready-to-use BMP files for your SP-404 MKII.</p>
+            </div>
+            
+            <div>
+                <h3>1. Upload Your Image</h3>
+                <div class="upload-area" id="upload-area">
+                    <p>Drag & drop an image here or click to select</p>
+                    <input type="file" id="file-input" class="file-input" accept="image/*">
+                </div>
+                
+                <div id="crop-section" style="display: none;">
+                    <h3>2. Crop to 2:1 Aspect Ratio</h3>
+                    <div class="crop-container">
+                        <img id="crop-image" style="max-width: 100%; display: block;">
+                        <div class="crop-area" id="crop-area">
+                            <div class="resize-handle resize-nw"></div>
+                            <div class="resize-handle resize-ne"></div>
+                            <div class="resize-handle resize-sw"></div>
+                            <div class="resize-handle resize-se"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="dimension-display" id="dimension-display">
+                        Crop Area: 0×0 pixels | Output: 128×64 pixels
+                    </div>
+                    
+                    <div class="crop-controls">
+                        <button class="btn" id="crop-reset">Reset Crop</button>
+                    </div>
+                </div>
+                
+                <div class="controls" id="controls-section" style="display: none;">
+                    <h3>3. Adjust Image Settings</h3>
+                    <div class="control-group">
+                        <label for="threshold">Black/White Threshold</label>
+                        <input type="range" id="threshold" min="0" max="255" value="128">
+                        <div class="dimension-display">Adjust to control the balance between black and white areas</div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="invert">Invert Colors</label>
+                        <input type="checkbox" id="invert">
+                    </div>
+                </div>
+            </div>
+            
+            <div id="preview-section" style="display: none;">
+                <h3>4. Download Your Custom Screens</h3>
+                <div class="preview-container">
+                    <div class="preview-box">
+                        <div class="preview-image" id="preview-1">
+                            Preview 1
+                        </div>
+                        <p>startup_1.bmp</p>
+                        <button class="btn btn-accent" id="download-1">Download</button>
+                    </div>
+                    
+                    <div class="preview-box">
+                        <div class="preview-image" id="preview-2">
+                            Preview 2
+                        </div>
+                        <p>startup_2.bmp</p>
+                        <button class="btn btn-accent" id="download-2">Download</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="status" id="status"></div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>
+            <a href="https://github.com/alei1180/sp-404mk2-screen-customizer" style="color: white" target="_blank">SP-404 MKII Screen Customizer</a>
+            by <a href="https://github.com/alei1180" style="color: white" target="_blank">Alexander Osadchy</a> | Create custom startup screens for your Roland SP-404 MKII
+        </p>
+    </footer>
+
+    <script>
+        // Crop functionality variables
+        let isDragging = false;
+        let isResizing = false;
+        let resizeDirection = '';
+        let startX, startY;
+        let cropX, cropY, cropWidth, cropHeight;
+        const currentAspectRatio = 2/1; // Fixed 2:1 aspect ratio
+        let currentCropImage = null;
+        let currentCropArea = null;
+        
+        // DOM elements
+        const uploadArea = document.getElementById('upload-area');
+        const fileInput = document.getElementById('file-input');
+        const cropSection = document.getElementById('crop-section');
+        const cropImage = document.getElementById('crop-image');
+        const cropAreaElement = document.getElementById('crop-area');
+        const dimensionDisplay = document.getElementById('dimension-display');
+        const cropReset = document.getElementById('crop-reset');
+        const controlsSection = document.getElementById('controls-section');
+        const previewSection = document.getElementById('preview-section');
+        const preview1 = document.getElementById('preview-1');
+        const preview2 = document.getElementById('preview-2');
+        const download1 = document.getElementById('download-1');
+        const download2 = document.getElementById('download-2');
+        const statusElement = document.getElementById('status');
+        const threshold = document.getElementById('threshold');
+        const invert = document.getElementById('invert');
+        
+        let originalImage = null;
+        let croppedImage = null;
+        let processedImage1 = null;
+        let processedImage2 = null;
+        
+        // Upload area click handler
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+        
+        // File input change handler
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+        
+        // Drag and drop handlers
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+        
+        // Handle uploaded file
+        function handleFile(file) {
+            if (!file.type.match('image.*')) {
+                showStatus('Please upload an image file', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                originalImage = new Image();
+                originalImage.onload = () => {
+                    // Show crop section
+                    cropSection.style.display = 'block';
+                    controlsSection.style.display = 'block';
+                    
+                    // Set up crop image
+                    cropImage.src = originalImage.src;
+                    currentCropImage = cropImage;
+                    currentCropArea = cropAreaElement;
+                    
+                    // Initialize crop area
+                    initCropArea(cropImage, cropAreaElement, dimensionDisplay);
+                    
+                    // Process immediately
+                    processAndUpdate();
+                    
+                    showStatus('Image loaded successfully. Adjust crop and threshold as needed.', 'success');
+                };
+                originalImage.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        // Initialize crop area
+        function initCropArea(imageElement, cropAreaElement, dimensionDisplay) {
+            const container = imageElement.parentElement;
+            const imgWidth = imageElement.offsetWidth;
+            const imgHeight = imageElement.offsetHeight;
+            
+            // Set initial crop area (centered, 50% of image size)
+            const initialSize = Math.min(imgWidth, imgHeight) * 0.5;
+            
+            // Adjust for 2:1 aspect ratio
+            let initWidth, initHeight;
+            if (imgWidth / imgHeight > currentAspectRatio) {
+                // Image is wider than 2:1 aspect ratio
+                initHeight = initialSize;
+                initWidth = initHeight * currentAspectRatio;
+            } else {
+                // Image is taller than 2:1 aspect ratio
+                initWidth = initialSize;
+                initHeight = initWidth / currentAspectRatio;
+            }
+            
+            // Center the crop area
+            cropX = (imgWidth - initWidth) / 2;
+            cropY = (imgHeight - initHeight) / 2;
+            cropWidth = initWidth;
+            cropHeight = initHeight;
+            
+            updateCropArea(cropAreaElement, dimensionDisplay);
+            
+            // Add event listeners for dragging and resizing
+            setupCropInteractions(cropAreaElement, dimensionDisplay);
+        }
+        
+        // Set up crop area interactions
+        function setupCropInteractions(cropAreaElement, dimensionDisplay) {
+            // Add event listeners for dragging
+            cropAreaElement.addEventListener('mousedown', startDrag);
+            cropAreaElement.addEventListener('touchstart', startDragTouch);
+            
+            // Add event listeners for resizing handles
+            const handles = cropAreaElement.querySelectorAll('.resize-handle');
+            handles.forEach(handle => {
+                handle.addEventListener('mousedown', startResize);
+                handle.addEventListener('touchstart', startResizeTouch);
+            });
+            
+            // Update dimension display
+            updateDimensionDisplay(dimensionDisplay);
+        }
+        
+        // Update crop area position and size
+        function updateCropArea(cropAreaElement, dimensionDisplay) {
+            cropAreaElement.style.left = cropX + 'px';
+            cropAreaElement.style.top = cropY + 'px';
+            cropAreaElement.style.width = cropWidth + 'px';
+            cropAreaElement.style.height = cropHeight + 'px';
+            
+            updateDimensionDisplay(dimensionDisplay);
+            
+            // Process image immediately when crop changes
+            if (originalImage) {
+                processAndUpdate();
+            }
+        }
+        
+        // Update dimension display
+        function updateDimensionDisplay(dimensionDisplay) {
+            if (dimensionDisplay) {
+                const scaleX = currentCropImage.naturalWidth / currentCropImage.offsetWidth;
+                const scaleY = currentCropImage.naturalHeight / currentCropImage.offsetHeight;
+                
+                const actualWidth = Math.round(cropWidth * scaleX);
+                const actualHeight = Math.round(cropHeight * scaleY);
+                
+                dimensionDisplay.textContent = `Crop Area: ${actualWidth}×${actualHeight} pixels | Output: 128×64 pixels`;
+            }
+        }
+        
+        // Start dragging (mouse)
+        function startDrag(e) {
+            if (e.target.classList.contains('resize-handle')) return;
+            
+            isDragging = true;
+            startX = e.clientX - cropX;
+            startY = e.clientY - cropY;
+            
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', stopDrag);
+        }
+        
+        // Start dragging (touch)
+        function startDragTouch(e) {
+            if (e.target.classList.contains('resize-handle')) return;
+            
+            isDragging = true;
+            const touch = e.touches[0];
+            startX = touch.clientX - cropX;
+            startY = touch.clientY - cropY;
+            
+            document.addEventListener('touchmove', dragTouch);
+            document.addEventListener('touchend', stopDrag);
+        }
+        
+        // Drag (mouse)
+        function drag(e) {
+            if (!isDragging) return;
+            
+            const container = currentCropImage.parentElement;
+            const maxX = container.offsetWidth - cropWidth;
+            const maxY = container.offsetHeight - cropHeight;
+            
+            cropX = Math.max(0, Math.min(e.clientX - startX, maxX));
+            cropY = Math.max(0, Math.min(e.clientY - startY, maxY));
+            
+            updateCropArea(currentCropArea, dimensionDisplay);
+        }
+        
+        // Drag (touch)
+        function dragTouch(e) {
+            if (!isDragging) return;
+            
+            const touch = e.touches[0];
+            const container = currentCropImage.parentElement;
+            const maxX = container.offsetWidth - cropWidth;
+            const maxY = container.offsetHeight - cropHeight;
+            
+            cropX = Math.max(0, Math.min(touch.clientX - startX, maxX));
+            cropY = Math.max(0, Math.min(touch.clientY - startY, maxY));
+            
+            updateCropArea(currentCropArea, dimensionDisplay);
+        }
+        
+        // Start resizing (mouse)
+        function startResize(e) {
+            isResizing = true;
+            resizeDirection = e.target.classList[1].replace('resize-', '');
+            startX = e.clientX;
+            startY = e.clientY;
+            
+            document.addEventListener('mousemove', resize);
+            document.addEventListener('mouseup', stopResize);
+            e.preventDefault();
+        }
+        
+        // Start resizing (touch)
+        function startResizeTouch(e) {
+            isResizing = true;
+            resizeDirection = e.target.classList[1].replace('resize-', '');
+            const touch = e.touches[0];
+            startX = touch.clientX;
+            startY = touch.clientY;
+            
+            document.addEventListener('touchmove', resizeTouch);
+            document.addEventListener('touchend', stopResize);
+            e.preventDefault();
+        }
+        
+        // Resize (mouse)
+        function resize(e) {
+            if (!isResizing) return;
+            
+            const container = currentCropImage.parentElement;
+            const deltaX = e.clientX - startX;
+            const deltaY = e.clientY - startY;
+            
+            applyResize(deltaX, deltaY, container);
+            
+            startX = e.clientX;
+            startY = e.clientY;
+            
+            updateCropArea(currentCropArea, dimensionDisplay);
+        }
+        
+        // Resize (touch)
+        function resizeTouch(e) {
+            if (!isResizing) return;
+            
+            const touch = e.touches[0];
+            const container = currentCropImage.parentElement;
+            const deltaX = touch.clientX - startX;
+            const deltaY = touch.clientY - startY;
+            
+            applyResize(deltaX, deltaY, container);
+            
+            startX = touch.clientX;
+            startY = touch.clientY;
+            
+            updateCropArea(currentCropArea, dimensionDisplay);
+        }
+        
+        // Apply resize based on direction (always maintain 2:1 aspect ratio)
+        function applyResize(deltaX, deltaY, container) {
+            const minSize = 20; // Minimum crop area size
+            
+            switch(resizeDirection) {
+                case 'nw':
+                    // Maintain 2:1 aspect ratio
+                    const deltaNW = Math.max(deltaX, deltaY / currentAspectRatio);
+                    cropX += deltaNW;
+                    cropY += deltaNW * currentAspectRatio;
+                    cropWidth -= deltaNW;
+                    cropHeight -= deltaNW * currentAspectRatio;
+                    break;
+                case 'ne':
+                    // Maintain 2:1 aspect ratio
+                    const deltaNE = Math.max(-deltaX, deltaY / currentAspectRatio);
+                    cropY += deltaNE * currentAspectRatio;
+                    cropWidth -= deltaNE;
+                    cropHeight -= deltaNE * currentAspectRatio;
+                    break;
+                case 'sw':
+                    // Maintain 2:1 aspect ratio
+                    const deltaSW = Math.max(deltaX, -deltaY / currentAspectRatio);
+                    cropX += deltaSW;
+                    cropWidth -= deltaSW;
+                    cropHeight += deltaSW * currentAspectRatio;
+                    break;
+                case 'se':
+                    // Maintain 2:1 aspect ratio
+                    const deltaSE = Math.max(deltaX, deltaY / currentAspectRatio);
+                    cropWidth += deltaSE;
+                    cropHeight += deltaSE * currentAspectRatio;
+                    break;
+            }
+            
+            // Ensure minimum size and boundaries
+            cropWidth = Math.max(minSize, cropWidth);
+            cropHeight = Math.max(minSize, cropHeight);
+            
+            // Maintain exact 2:1 aspect ratio
+            cropHeight = cropWidth / currentAspectRatio;
+            
+            // Ensure crop area stays within image bounds
+            if (cropX < 0) {
+                cropWidth += cropX;
+                cropX = 0;
+            }
+            if (cropY < 0) {
+                cropHeight += cropY;
+                cropY = 0;
+            }
+            if (cropX + cropWidth > container.offsetWidth) {
+                cropWidth = container.offsetWidth - cropX;
+            }
+            if (cropY + cropHeight > container.offsetHeight) {
+                cropHeight = container.offsetHeight - cropY;
+            }
+            
+            // Maintain 2:1 aspect ratio after boundary adjustments
+            if (cropWidth / cropHeight > currentAspectRatio) {
+                cropWidth = cropHeight * currentAspectRatio;
+            } else {
+                cropHeight = cropWidth / currentAspectRatio;
+            }
+        }
+        
+        // Stop dragging/resizing
+        function stopDrag() {
+            isDragging = false;
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('touchmove', dragTouch);
+            document.removeEventListener('mouseup', stopDrag);
+            document.removeEventListener('touchend', stopDrag);
+        }
+        
+        function stopResize() {
+            isResizing = false;
+            document.removeEventListener('mousemove', resize);
+            document.removeEventListener('touchmove', resizeTouch);
+            document.removeEventListener('mouseup', stopResize);
+            document.removeEventListener('touchend', stopResize);
+        }
+        
+        // Reset crop button
+        cropReset.addEventListener('click', () => {
+            if (originalImage) {
+                initCropArea(cropImage, cropAreaElement, dimensionDisplay);
+            }
+        });
+        
+        // Real-time processing for threshold and invert changes
+        threshold.addEventListener('input', processAndUpdate);
+        invert.addEventListener('change', processAndUpdate);
+        
+        // Process and update images
+        function processAndUpdate() {
+            if (!originalImage) return;
+            
+            // Create canvas for cropping
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Calculate actual image coordinates (accounting for displayed size vs actual size)
+            const img = cropImage;
+            const scaleX = img.naturalWidth / img.offsetWidth;
+            const scaleY = img.naturalHeight / img.offsetHeight;
+            
+            // Set canvas size to crop area (will be resized to 128x64 later)
+            canvas.width = cropWidth * scaleX;
+            canvas.height = cropHeight * scaleY;
+            
+            // Draw cropped portion
+            ctx.drawImage(
+                originalImage,
+                cropX * scaleX, cropY * scaleY, // source x, y
+                cropWidth * scaleX, cropHeight * scaleY, // source width, height
+                0, 0, // destination x, y
+                cropWidth * scaleX, cropHeight * scaleY // destination width, height
+            );
+            
+            // Create cropped image
+            croppedImage = new Image();
+            croppedImage.onload = () => {
+                const thresholdValue = parseInt(threshold.value);
+                const invertValue = invert.checked;
+                
+                // Process image for startup_1 - FIXED: Ensure exact 128x64 output
+                processedImage1 = processImage(croppedImage, 128, 64, thresholdValue, invertValue);
+                preview1.innerHTML = '';
+                preview1.appendChild(processedImage1);
+                
+                // Process image for startup_2 - FIXED: Ensure exact 128x64 output
+                processedImage2 = processImage(croppedImage, 128, 64, thresholdValue, invertValue);
+                preview2.innerHTML = '';
+                preview2.appendChild(processedImage2);
+                
+                // Show preview section
+                previewSection.style.display = 'block';
+            };
+            croppedImage.src = canvas.toDataURL();
+        }
+        
+        // Download handlers
+        download1.addEventListener('click', () => {
+            if (processedImage1) {
+                downloadImage(processedImage1, 'startup_1.bmp');
+            }
+        });
+        
+        download2.addEventListener('click', () => {
+            if (processedImage2) {
+                downloadImage(processedImage2, 'startup_2.bmp');
+            }
+        });
+        
+        // Utility functions
+        function processImage(img, width, height, thresholdValue, invertValue) {
+            const canvas = document.createElement('canvas');
+            // FIXED: Set exact output dimensions
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            
+            // Draw image to canvas, scaling to fit exact dimensions
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // Get image data
+            const imageData = ctx.getImageData(0, 0, width, height);
+            const data = imageData.data;
+            
+            // Apply threshold and convert to black and white
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+                
+                // Calculate grayscale value
+                const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+                
+                // Apply threshold
+                const value = gray > thresholdValue ? 255 : 0;
+                
+                // Apply inversion if needed
+                const finalValue = invertValue ? 255 - value : value;
+                
+                // Set RGB to the same value (grayscale)
+                data[i] = finalValue;     // R
+                data[i + 1] = finalValue; // G
+                data[i + 2] = finalValue; // B
+                // Alpha channel (data[i + 3]) remains unchanged
+            }
+            
+            // Put the modified image data back to canvas
+            ctx.putImageData(imageData, 0, 0);
+            
+            // Create a new image from the canvas
+            const processedImg = new Image();
+            processedImg.src = canvas.toDataURL();
+            
+            return processedImg;
+        }
+        
+        function downloadImage(img, filename) {
+            const canvas = document.createElement('canvas');
+            // FIXED: Ensure exact 128x64 dimensions for output
+            canvas.width = 128;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            
+            // Draw the processed image to canvas
+            ctx.drawImage(img, 0, 0, 128, 64);
+            
+            // Convert to BMP blob with exact dimensions
+            canvas.toBlob(blob => {
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(a.href);
+                
+                showStatus(`Downloaded ${filename} successfully! (128×64 pixels)`, 'success');
+            }, 'image/bmp');
+        }
+        
+        function showStatus(message, type) {
+            statusElement.textContent = message;
+            statusElement.className = 'status ' + type;
+            
+            // Auto-hide success messages after 5 seconds
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusElement.style.display = 'none';
+                }, 5000);
+            }
+        }
+    </script>
+</body>
+</html>
