@@ -145,6 +145,15 @@
             background: #555;
             border-radius: 5px;
         }
+
+        select {
+            max-width: 100%;
+            padding: 0.5rem;
+            color: var(--sp-text);
+            background-color: var(--sp-bg);
+            border: 1px solid var(--sp-highlight);
+            border-radius: 5px;
+        }
         
         .btn {
             background-color: var(--secondary);
@@ -336,11 +345,40 @@
                 <div class="controls" id="controls-section" style="display: none;">
                     <h3>3. Adjust Image Settings</h3>
                     <div class="control-group">
+                        <label for="grayscale-mode">Grayscale Mode</label>
+                        <select id="grayscale-mode" aria-describedby="grayscale-description">
+                            <option value="auto">Auto (standard brightness)</option>
+                            <option value="red">Red channel</option>
+                            <option value="green">Green channel</option>
+                            <option value="blue">Blue channel</option>
+                        </select>
+                        <div class="dimension-display" id="grayscale-description">Try a color channel to separate objects with different colors but similar brightness.</div>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="contrast">Contrast: <output id="contrast-value" for="contrast">100%</output></label>
+                        <input type="range" id="contrast" min="0" max="300" value="100" aria-describedby="contrast-description">
+                        <div class="dimension-display" id="contrast-description">100% keeps the original contrast. Increase to emphasize differences before dithering.</div>
+                        <button type="button" class="btn" id="contrast-reset">Reset Contrast</button>
+                    </div>
+
+                    <div class="control-group">
                         <label for="threshold">Black/White Threshold</label>
                         <input type="range" id="threshold" min="0" max="255" value="128">
                         <div class="dimension-display">Adjust to control the balance between black and white areas</div>
                     </div>
                     
+                    <div class="control-group">
+                        <label for="dithering">Dithering</label>
+                        <select id="dithering" aria-describedby="dithering-description">
+                            <option value="none">None</option>
+                            <option value="floyd-steinberg">Floyd–Steinberg</option>
+                            <option value="atkinson">Atkinson</option>
+                            <option value="bayer-4x4">Bayer 4×4</option>
+                        </select>
+                        <div class="dimension-display" id="dithering-description">Preserve shading with black and white dots: Floyd–Steinberg for detail, Atkinson for crisp contrast, or Bayer for a regular pattern.</div>
+                    </div>
+
                     <div class="control-group">
                         <label for="invert">Invert Colors</label>
                         <input type="checkbox" id="invert">
@@ -409,6 +447,11 @@
         const statusElement = document.getElementById('status');
         const threshold = document.getElementById('threshold');
         const invert = document.getElementById('invert');
+        const dithering = document.getElementById('dithering');
+        const grayscaleMode = document.getElementById('grayscale-mode');
+        const contrast = document.getElementById('contrast');
+        const contrastValueDisplay = document.getElementById('contrast-value');
+        const contrastReset = document.getElementById('contrast-reset');
         
         let originalImage = null;
         let croppedImage = null;
@@ -758,9 +801,20 @@
             }
         });
         
-        // Real-time processing for threshold and invert changes
+        // Real-time processing for image setting changes
         threshold.addEventListener('input', processAndUpdate);
         invert.addEventListener('change', processAndUpdate);
+        dithering.addEventListener('change', processAndUpdate);
+        grayscaleMode.addEventListener('change', processAndUpdate);
+        contrast.addEventListener('input', () => {
+            contrastValueDisplay.value = `${contrast.value}%`;
+            processAndUpdate();
+        });
+        contrastReset.addEventListener('click', () => {
+            contrast.value = contrast.defaultValue;
+            contrastValueDisplay.value = `${contrast.value}%`;
+            processAndUpdate();
+        });
         
         // Process and update images
         function processAndUpdate() {
@@ -793,14 +847,17 @@
             croppedImage.onload = () => {
                 const thresholdValue = parseInt(threshold.value);
                 const invertValue = invert.checked;
+                const ditheringValue = dithering.value;
+                const grayscaleModeValue = grayscaleMode.value;
+                const contrastValue = Number(contrast.value) / 100;
                 
                 // Process image for startup_1 - FIXED: Ensure exact 128x64 output
-                processedImage1 = processImage(croppedImage, 128, 64, thresholdValue, invertValue);
+                processedImage1 = processImage(croppedImage, 128, 64, thresholdValue, invertValue, ditheringValue, grayscaleModeValue, contrastValue);
                 preview1.innerHTML = '';
                 preview1.appendChild(processedImage1);
                 
                 // Process image for startup_2 - FIXED: Ensure exact 128x64 output
-                processedImage2 = processImage(croppedImage, 128, 64, thresholdValue, invertValue);
+                processedImage2 = processImage(croppedImage, 128, 64, thresholdValue, invertValue, ditheringValue, grayscaleModeValue, contrastValue);
                 preview2.innerHTML = '';
                 preview2.appendChild(processedImage2);
                 
@@ -824,7 +881,7 @@
         });
         
         // Utility functions
-        function processImage(img, width, height, thresholdValue, invertValue) {
+        function processImage(img, width, height, thresholdValue, invertValue, ditheringValue = 'none', grayscaleModeValue = 'auto', contrastValue = 1) {
             const canvas = document.createElement('canvas');
             // FIXED: Set exact output dimensions
             canvas.width = width;
@@ -838,17 +895,59 @@
             const imageData = ctx.getImageData(0, 0, width, height);
             const data = imageData.data;
             
-            // Apply threshold and convert to black and white
+            // Keep diffusion errors in floating point, without clamping or rounding.
+            const grayscale = new Float64Array(width * height);
             for (let i = 0; i < data.length; i += 4) {
-                const r = data[i];
-                const g = data[i + 1];
-                const b = data[i + 2];
-                
-                // Calculate grayscale value
-                const gray = 0.299 * r + 0.587 * g + 0.114 * b;
-                
-                // Apply threshold
-                const value = gray > thresholdValue ? 255 : 0;
+                let gray;
+                switch (grayscaleModeValue) {
+                    case 'red': gray = data[i]; break;
+                    case 'green': gray = data[i + 1]; break;
+                    case 'blue': gray = data[i + 2]; break;
+                    default: gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+                }
+                // Adjust contrast around middle gray before quantization and diffusion.
+                grayscale[i / 4] = Math.max(0, Math.min(255, (gray - 127.5) * contrastValue + 127.5));
+            }
+
+            const bayer4x4 = [
+                [0, 8, 2, 10],
+                [12, 4, 14, 6],
+                [3, 11, 1, 9],
+                [15, 7, 13, 5]
+            ];
+
+            // Apply threshold and optionally diffuse quantization error to neighbors.
+            for (let pixel = 0; pixel < grayscale.length; pixel++) {
+                const i = pixel * 4;
+                const gray = grayscale[pixel];
+                const x = pixel % width;
+                const y = Math.floor(pixel / width);
+                // Center the Bayer offsets around the selected threshold.
+                const pixelThreshold = ditheringValue === 'bayer-4x4'
+                    ? thresholdValue + ((bayer4x4[y % 4][x % 4] + 0.5) / 16 - 0.5) * 255
+                    : thresholdValue;
+                const value = gray > pixelThreshold ? 255 : 0;
+
+                if (ditheringValue === 'floyd-steinberg') {
+                    const error = gray - value;
+                    if (x + 1 < width) grayscale[pixel + 1] += error * 7 / 16;
+                    if (y + 1 < height) {
+                        if (x > 0) grayscale[pixel + width - 1] += error * 3 / 16;
+                        grayscale[pixel + width] += error * 5 / 16;
+                        if (x + 1 < width) grayscale[pixel + width + 1] += error / 16;
+                    }
+                } else if (ditheringValue === 'atkinson') {
+                    // Atkinson distributes only 6/8 of the error for stronger contrast.
+                    const error = (gray - value) / 8;
+                    if (x + 1 < width) grayscale[pixel + 1] += error;
+                    if (x + 2 < width) grayscale[pixel + 2] += error;
+                    if (y + 1 < height) {
+                        if (x > 0) grayscale[pixel + width - 1] += error;
+                        grayscale[pixel + width] += error;
+                        if (x + 1 < width) grayscale[pixel + width + 1] += error;
+                    }
+                    if (y + 2 < height) grayscale[pixel + 2 * width] += error;
+                }
                 
                 // Apply inversion if needed
                 const finalValue = invertValue ? 255 - value : value;
